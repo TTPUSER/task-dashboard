@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2026 Daily Task & Activity Control Dashboard (Full-Screen v2)</title>
+<style>
+  :root {
+    --bg-main: #f8fafc;
+    --bg-card: #ffffff;
+    --bg-slate-900: #0f172a;
+    --bg-slate-800: #1e293b;
+    --bg-slate-100: #f1f5f9;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --border-color: #e2e8f0;
+    --indigo-600: #4f46e5;
+    --indigo-500: #6366f1;
+    --indigo-50: #eef2ff;
+    --emerald-bg: #dcfce7;
+    --emerald-fg: #166534;
+    --blue-bg: #dbeafe;
+    --blue-fg: #1e40af;
+    --amber-bg: #fef3c7;
+    --amber-fg: #92400e;
+    --red-bg: #fee2e2;
+    --red-fg: #991b1b;
+    --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+    --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+    --radius-lg: 14px;
+    --radius-md: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    line-height: 1.45;
+  }
+  body {
+    padding-bottom: 36px;
+  }
+
+  /* Header Bar */
+  header {
+    background: linear-gradient(135deg, var(--bg-slate-900) 0%, var(--bg-slate-800) 100%);
+    color: #fff;
+    padding: 14px 24px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    box-shadow: var(--shadow-md);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    width: 100%;
+  }
+  .brand-title h1 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .brand-title p {
+    font-size: 0.8rem;
+    color: #cbd5e1;
+    margin-top: 2px;
+  }
+  .header-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .date-badge {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 5px 12px;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.82rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .date-badge input[type="date"] {
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-weight: 600;
+    font-family: inherit;
+    font-size: 0.82rem;
+    cursor: pointer;
+    outline: none;
+  }
+  .date-badge input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+  }
+  .btn {
+    border: none;
+    border-radius: 8px;
+    padding: 7px 13px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .btn-primary {
+    background: var(--indigo-600);
+    color: #fff;
+  }
+  .btn-primary:hover { background: var(--indigo-500); }
+  .btn-ghost {
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,0.2); }
+
+  /* Full-Screen Container & Navigation Bar */
+  .container {
+    width: 100%;
+    max-width: 100%;
+    margin: 16px auto 0;
+    padding: 0 24px;
+  }
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 16px;
+    width: 100%;
+  }
+  @media (max-width: 960px) {
+    .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  .kpi-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: 14px 18px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    overflow: hidden;
+    min-width: 0;
+  }
+  .kpi-card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: var(--indigo-600);
+  }
+  .kpi-card.todo::before { background: #64748b; }
+  .kpi-card.doing::before { background: #2563eb; }
+  .kpi-card.blocked::before { background: #dc2626; }
+  .kpi-card.done::before { background: #16a34a; }
+  .kpi-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+  }
+  .kpi-value {
+    font-size: 1.65rem;
+    font-weight: 800;
+    margin-top: 4px;
+    color: var(--text-main);
+  }
+  .kpi-sub {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  /* View Switcher Tabs */
+  .tabs-bar {
+    display: flex;
+    gap: 6px;
+    background: var(--bg-slate-100);
+    padding: 5px;
+    border-radius: var(--radius-md);
+    width: fit-content;
+    margin-bottom: 16px;
+    border: 1px solid var(--border-color);
+  }
+  .tab-btn {
+    border: none;
+    background: transparent;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .tab-btn.active {
+    background: var(--bg-card);
+    color: var(--indigo-600);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .view-panel { display: none; width: 100%; }
+  .view-panel.active { display: block; width: 100%; }
+
+  /* 1. Calendar View Layout - Strictly Non-Overflowing Grid */
+  .calendar-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 350px;
+    gap: 16px;
+    width: 100%;
+    align-items: start;
+  }
+  @media (max-width: 1100px) {
+    .calendar-layout { grid-template-columns: minmax(0, 1fr); }
+  }
+  .card {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    padding: 16px 18px;
+    min-width: 0;
+    width: 100%;
+  }
+  .cal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .cal-header h2 {
+    font-size: 1.15rem;
+    font-weight: 700;
+  }
+  .cal-nav {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .cal-nav button {
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.8rem;
+  }
+  .cal-nav button:hover { background: var(--bg-slate-100); }
+
+  /* Critical fix: minmax(0, 1fr) prevents long task names from expanding calendar columns */
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 6px;
+    width: 100%;
+  }
+  .cal-dow {
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 6px 0;
+  }
+  .cal-day {
+    min-height: 98px;
+    min-width: 0;
+    border: 1px solid var(--border-color);
+    border-radius: 9px;
+    padding: 6px;
+    background: var(--bg-card);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    overflow: hidden;
+  }
+  .cal-day:hover {
+    border-color: var(--indigo-500);
+    box-shadow: var(--shadow-sm);
+  }
+  .cal-day.other-month {
+    background: #f8fafc;
+    opacity: 0.48;
+  }
+  .cal-day.selected {
+    border: 2px solid var(--indigo-600);
+    background: var(--indigo-50);
+  }
+  .cal-day.drag-over {
+    background: #dbeafe;
+    border: 2px dashed var(--indigo-600);
+  }
+  .cal-day-num {
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2px;
+  }
+  .today-tag {
+    background: var(--indigo-600);
+    color: #fff;
+    font-size: 0.62rem;
+    padding: 1px 6px;
+    border-radius: 99px;
+  }
+  .cal-pill {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 600;
+    cursor: grab;
+  }
+  .cal-pill.High { background: var(--red-bg); color: var(--red-fg); }
+  .cal-pill.Medium { background: var(--blue-bg); color: var(--blue-fg); }
+  .cal-pill.Low { background: var(--bg-slate-100); color: var(--text-muted); }
+  .cal-pill.Done { background: var(--emerald-bg); color: var(--emerald-fg); text-decoration: line-through; }
+
+  /* Inspector Sidebar */
+  .inspector-hdr {
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+    margin-bottom: 12px;
+  }
+  .inspector-hdr h3 { font-size: 1rem; font-weight: 700; }
+  .inspector-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 620px;
+    overflow-y: auto;
+  }
+  .insp-item {
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 11px;
+    background: var(--bg-main);
+  }
+  .insp-item-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 5px;
+  }
+  .badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    display: inline-block;
+  }
+  .badge.High { background: var(--red-bg); color: var(--red-fg); }
+  .badge.Medium { background: var(--amber-bg); color: var(--amber-fg); }
+  .badge.Low { background: var(--bg-slate-100); color: var(--text-muted); }
+  .badge.Done { background: var(--emerald-bg); color: var(--emerald-fg); }
+  .badge.Doing { background: var(--blue-bg); color: var(--blue-fg); }
+  .badge.To-Do { background: var(--bg-slate-100); color: #334155; }
+  .badge.Blocked { background: var(--red-bg); color: var(--red-fg); }
+
+  /* 2. Kanban Board View */
+  .kanban-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    width: 100%;
+  }
+  @media (max-width: 1100px) {
+    .kanban-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 640px) {
+    .kanban-grid { grid-template-columns: minmax(0, 1fr); }
+  }
+  .kanban-col {
+    background: var(--bg-slate-100);
+    border-radius: var(--radius-lg);
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    min-height: 520px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+  }
+  .kanban-col.drag-over {
+    background: var(--indigo-50);
+    border: 2px dashed var(--indigo-600);
+  }
+  .kanban-col-hdr {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 700;
+    font-size: 0.88rem;
+    padding: 4px 6px;
+  }
+  .kanban-card {
+    background: var(--bg-card);
+    border-radius: 10px;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    cursor: grab;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+    min-width: 0;
+  }
+  .kanban-card:active { cursor: grabbing; }
+  .kanban-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+  .kanban-card-title {
+    font-weight: 600;
+    font-size: 0.86rem;
+    margin: 6px 0;
+    word-break: break-word;
+  }
+  .kanban-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--bg-slate-100);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .inline-input {
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 3px 6px;
+    font-size: 0.75rem;
+    font-family: inherit;
+    background: var(--bg-main);
+    color: var(--text-main);
+    cursor: pointer;
+  }
+
+  /* 3. Interactive Table View */
+  .filter-bar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+    align-items: center;
+  }
+  .filter-bar input, .filter-bar select {
+    padding: 7px 11px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.84rem;
+    background: var(--bg-card);
+  }
+  .table-wrap {
+    width: 100%;
+    overflow-x: auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.84rem;
+  }
+  th {
+    background: var(--bg-slate-900);
+    color: #fff;
+    text-align: left;
+    padding: 10px 10px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
+  }
+  tr:hover td { background: #f8fafc; }
+  td input[type="date"], td input[type="time"], td select, td input[type="number"], td input[type="text"] {
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 4px 7px;
+    font-size: 0.8rem;
+    font-family: inherit;
+    background: #fff;
+  }
+  td input[type="date"]:focus, td input[type="time"]:focus, td select:focus, td input[type="text"]:focus {
+    outline: 2px solid var(--indigo-600);
+    border-color: transparent;
+  }
+
+  /* Modal for New Task */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    padding: 16px;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    max-width: 520px;
+    width: 100%;
+    padding: 22px;
+    box-shadow: var(--shadow-md);
+  }
+  .modal h3 { margin-bottom: 14px; font-size: 1.1rem; }
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-group label { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); }
+  .form-group input, .form-group select, .form-group textarea {
+    padding: 8px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-family: inherit;
+  }
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 18px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand-title">
+    <h1>⚡ DAILY TASK & ACTIVITY CONTROL DASHBOARD</h1>
+    <p>2026 Interactive Edition — Native Pop-up Date/Time Pickers, Calendar Planner & Drag-and-Drop Kanban</p>
+  </div>
+  <div class="header-controls">
+    <div class="date-badge">
+      <span>📅 Dashboard Date:</span>
+      <input type="date" id="dashboardDateInput" value="2026-11-10">
+    </div>
+    <button class="btn btn-primary" onclick="openModal()">+ เพิ่มงานใหม่ (Add Task)</button>
+    <button class="btn btn-ghost" onclick="exportCSV()">⬇ Export CSV</button>
+    <button class="btn btn-ghost" onclick="resetDefaultData()">↺ Reset ค่าเริ่มต้น</button>
+  </div>
+</header>
+
+<div class="container">
+  <!-- KPI Bento Row -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">Total Tasks</div>
+      <div class="kpi-value" id="kpiTotal">0</div>
+      <div class="kpi-sub">รายการงานทั้งหมดในระบบ</div>
+    </div>
+    <div class="kpi-card todo">
+      <div class="kpi-label">To Do</div>
+      <div class="kpi-value" id="kpiTodo">0</div>
+      <div class="kpi-sub">รอดำเนินการ</div>
+    </div>
+    <div class="kpi-card doing">
+      <div class="kpi-label">Doing (Active)</div>
+      <div class="kpi-value" id="kpiDoing">0</div>
+      <div class="kpi-sub">กำลังดำเนินการ</div>
+    </div>
+    <div class="kpi-card blocked">
+      <div class="kpi-label">Blocked / High Open</div>
+      <div class="kpi-value" id="kpiHighOpen">0</div>
+      <div class="kpi-sub">งานสำคัญสูงที่ยังไม่เสร็จ</div>
+    </div>
+    <div class="kpi-card done">
+      <div class="kpi-label">Completed</div>
+      <div class="kpi-value" id="kpiDone">0</div>
+      <div class="kpi-sub" id="kpiRate">0% Completion Rate</div>
+    </div>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="tabs-bar">
+    <button class="tab-btn active" onclick="switchTab('calendar', this)">📅 แท็บปฏิทิน (Interactive Calendar)</button>
+    <button class="tab-btn" onclick="switchTab('kanban', this)">📋 บอร์ดลากวาง (Kanban Drag & Drop)</button>
+    <button class="tab-btn" onclick="switchTab('table', this)">🗂 ตารางฐานข้อมูล (Smart Task List)</button>
+  </div>
+
+  <!-- TAB 1: Interactive Calendar View -->
+  <div id="view-calendar" class="view-panel active">
+    <div class="calendar-layout">
+      <div class="card">
+        <div class="cal-header">
+          <h2 id="calTitle">November 2026</h2>
+          <div class="cal-nav">
+            <button onclick="changeMonth(-1)">◀ เดือนก่อนหน้า</button>
+            <button onclick="goToday()">วันนี้ (10 Nov 2026)</button>
+            <button onclick="changeMonth(1)">เดือนถัดไป ▶</button>
+          </div>
+        </div>
+        <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:10px;">
+          💡 <strong>วิธีใช้งาน:</strong> คลิกที่ช่องวันที่เพื่อดูรายละเอียดงานทางขวา หรือ <strong>ลากป้ายงาน (Drag & Drop)</strong> ข้ามช่องวันเพื่อเปลี่ยน Due Date ทันที
+        </p>
+        <div class="cal-grid" id="calGridHeader">
+          <div class="cal-dow">Sun</div>
+          <div class="cal-dow">Mon</div>
+          <div class="cal-dow">Tue</div>
+          <div class="cal-dow">Wed</div>
+          <div class="cal-dow">Thu</div>
+          <div class="cal-dow">Fri</div>
+          <div class="cal-dow">Sat</div>
+        </div>
+        <div class="cal-grid" id="calGridBody"></div>
+      </div>
+
+      <div class="card">
+        <div class="inspector-hdr">
+          <h3 id="inspDateTitle">งานประจำวันที่เลือก</h3>
+          <p style="font-size:0.78rem;color:var(--text-muted);margin-top:2px;">สามารถเปลี่ยนวันที่ เวลา และสถานะได้โดยตรงจากการ์ดด้านล่าง</p>
+        </div>
+        <div class="inspector-list" id="inspectorList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: Kanban Drag & Drop Board -->
+  <div id="view-kanban" class="view-panel">
+    <p style="font-size:0.84rem;color:var(--text-muted);margin-bottom:12px;">
+      💡 <strong>วิธีใช้งาน:</strong> ลากการ์ดงานข้ามคอลัมน์เพื่ออัปเดตสถานะ (To Do / Doing / Blocked / Done) หรือคลิกป๊อปอัปวันที่/เวลาในการ์ดได้ทันที
+    </p>
+    <div class="kanban-grid" id="kanbanBoard"></div>
+  </div>
+
+  <!-- TAB 3: Smart Task Table -->
+  <div id="view-table" class="view-panel">
+    <div class="card">
+      <div class="filter-bar">
+        <input type="text" id="searchBox" placeholder="🔍 ค้นหาชื่องาน, หมวดหมู่, หรือบันทึก..." oninput="renderAll()" style="min-width:260px;">
+        <select id="filterStatus" onchange="renderAll()">
+          <option value="ALL">ทุกสถานะ (All Status)</option>
+          <option value="To Do">To Do</option>
+          <option value="Doing">Doing</option>
+          <option value="Blocked">Blocked</option>
+          <option value="Done">Done</option>
+        </select>
+        <select id="filterPriority" onchange="renderAll()">
+          <option value="ALL">ทุกระดับความสำคัญ (All Priority)</option>
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+        </select>
+        <select id="filterCategory" onchange="renderAll()">
+          <option value="ALL">ทุกหมวดหมู่ (All Categories)</option>
+          <option value="MAD">MAD</option>
+          <option value="TED">TED</option>
+          <option value="PCD4">PCD4</option>
+          <option value="AF">AF</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Priority</th>
+              <th>Task Description</th>
+              <th>Category</th>
+              <th>Due Date (Pop-up)</th>
+              <th>Due Time (Pop-up)</th>
+              <th>Status</th>
+              <th>Est. (m)</th>
+              <th>Urgent</th>
+              <th>Important</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="taskTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Task Modal -->
+<div class="modal-backdrop" id="taskModal">
+  <div class="modal">
+    <h3>➕ เพิ่มงานใหม่ (Add New Task)</h3>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>รายละเอียดงาน (Task Description)</label>
+        <input type="text" id="newTaskDesc" placeholder="ระบุชื่องาน...">
+      </div>
+      <div class="form-group">
+        <label>ความสำคัญ (Priority)</label>
+        <select id="newTaskPri">
+          <option value="High">High</option>
+          <option value="Medium" selected>Medium</option>
+          <option value="Low">Low</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>หมวดหมู่ (Category)</label>
+        <select id="newTaskCat">
+          <option value="MAD">MAD</option>
+          <option value="TED" selected>TED</option>
+          <option value="PCD4">PCD4</option>
+          <option value="AF">AF</option>
+          <option value="JDC">JDC</option>
+          <option value="TTP">TTP</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>วันครบกำหนด (Due Date)</label>
+        <input type="date" id="newTaskDate" value="2026-11-13">
+      </div>
+      <div class="form-group">
+        <label>เวลา (Due Time)</label>
+        <input type="time" id="newTaskTime" value="09:00" step="1800">
+      </div>
+      <div class="form-group">
+        <label>สถานะ (Status)</label>
+        <select id="newTaskStatus">
+          <option value="To Do" selected>To Do</option>
+          <option value="Doing">Doing</option>
+          <option value="Blocked">Blocked</option>
+          <option value="Done">Done</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>เวลาประเมิน (นาที)</label>
+        <input type="number" id="newTaskEst" placeholder="เช่น 60">
+      </div>
+      <div class="form-group full">
+        <label>หมายเหตุ (Notes)</label>
+        <input type="text" id="newTaskNotes" placeholder="รายละเอียดเพิ่มเติม...">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="saveNewTask()">บันทึกงาน</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const INITIAL_TASKS = [
+  { id: 1, priority: 'Medium', task: 'Seal fixed free data base', category: 'MAD', dueDate: '2026-11-13', dueTime: '13:30', status: 'Doing', est: 1440, urgent: 'Yes', important: 'Yes', notes: 'SYLL request data base for fixed free contact' },
+  { id: 2, priority: 'Medium', task: '2P-1601 A/B fail', category: 'TED', dueDate: '2026-11-20', dueTime: '10:00', status: 'To Do', est: 300, urgent: 'No', important: 'Yes', notes: 'Task issued on 7 Aug 26' },
+  { id: 3, priority: 'Medium', task: '3K-101 A/B found liquid in compressor', category: 'MAD', dueDate: '2026-11-13', dueTime: '17:00', status: 'Doing', est: '', urgent: 'Yes', important: 'Yes', notes: 'Found liquid in compressor' },
+  { id: 4, priority: 'Low', task: 'Add AES seal into AML', category: 'MAD', dueDate: '2026-11-23', dueTime: '15:00', status: 'To Do', est: '', urgent: 'No', important: 'No', notes: 'SYLL request add AES seal into AML' },
+  { id: 5, priority: 'Low', task: 'Claiming per diems and expenses FAT', category: 'AF', dueDate: '2026-11-13', dueTime: '08:00', status: 'To Do', est: 60, urgent: 'No', important: 'Yes', notes: 'Clearing point app' },
+  { id: 6, priority: 'Medium', task: '4P-4001 A/B upgrade mechanical seal meeting', category: 'TED', dueDate: '2026-11-18', dueTime: '10:00', status: 'To Do', est: 60, urgent: 'No', important: 'No', notes: 'Meeting clarification of objective this project' },
+  { id: 7, priority: 'Medium', task: '3P-3708A/B upgrade pump', category: 'TED', dueDate: '2026-11-13', dueTime: '10:00', status: 'To Do', est: '', urgent: 'No', important: 'Yes', notes: 'Waiting JDC update process data sheet' },
+  { id: 8, priority: 'Low', task: 'Follow up document with SOLAR TURBINE', category: 'TED', dueDate: '2026-11-12', dueTime: '08:00', status: 'To Do', est: 60, urgent: 'No', important: 'Yes', notes: 'Follow up pending document for project closing' },
+  { id: 9, priority: 'Low', task: 'Follow up MDR document for project upgrade seal 3P-403B', category: 'TED', dueDate: '2026-11-12', dueTime: '09:00', status: 'To Do', est: 60, urgent: 'No', important: 'Yes', notes: 'Follow up pending document for project closing' },
+  { id: 10, priority: 'Medium', task: 'Support MOC project uprate GTG-2', category: 'PCD4', dueDate: '2026-11-18', dueTime: '08:00', status: 'Doing', est: '', urgent: 'Yes', important: 'Yes', notes: 'Support project side for uprate GTG-2' },
+  { id: 11, priority: 'Medium', task: 'MOC 3P-403B', category: 'TED', dueDate: '2026-11-19', dueTime: '08:00', status: 'Doing', est: '', urgent: 'Yes', important: 'Yes', notes: 'Approve process / support document' },
+  { id: 12, priority: 'Medium', task: 'MOC 3P-3701A Bladder', category: 'MAD', dueDate: '2026-11-24', dueTime: '10:30', status: 'Doing', est: '', urgent: 'No', important: 'Yes', notes: 'MAD request // waiting EQT document' },
+  { id: 13, priority: 'Medium', task: 'Support MOC project uprate K-1317', category: 'PCD4', dueDate: '2026-11-18', dueTime: '09:00', status: 'Doing', est: '', urgent: 'No', important: 'Yes', notes: 'Support project side for new Air compressor K-1317' },
+  { id: 14, priority: 'Low', task: 'Confirm recommend spare part 3K-3351A/B and 3K-3353A/B', category: 'MAD', dueDate: '2026-11-25', dueTime: '08:00', status: 'To Do', est: '', urgent: 'No', important: 'No', notes: 'Confirm the recommend spare part' },
+  { id: 15, priority: 'Medium', task: 'Project C358 bare compressor clarification', category: 'MAD', dueDate: '2026-11-10', dueTime: '10:30', status: 'Done', est: 60, urgent: 'No', important: 'Yes', notes: 'Issued email for request clarification' },
+  { id: 16, priority: 'Medium', task: 'K-1317 trips from the lube oil pressure low low', category: 'PCD4', dueDate: '2026-11-18', dueTime: '10:00', status: 'Doing', est: '', urgent: 'No', important: 'Yes', notes: 'Waiting spare part from ATLAS COPCO on 17 Nov 26' },
+  { id: 17, priority: 'High', task: 'Asset closed Uprate GTG-2', category: 'TED', dueDate: '2026-11-26', dueTime: '08:00', status: 'To Do', est: '', urgent: 'No', important: 'Yes', notes: 'Close budget' },
+  { id: 18, priority: 'High', task: 'Asset closed Uprate K-1317', category: 'TED', dueDate: '2026-11-26', dueTime: '11:00', status: 'To Do', est: '', urgent: 'No', important: 'Yes', notes: 'Close budget' },
+  { id: 19, priority: 'High', task: 'Asset closed Uprate 3P-403B', category: 'TED', dueDate: '2026-11-26', dueTime: '15:00', status: 'To Do', est: '', urgent: 'No', important: 'Yes', notes: 'Close budget' },
+  { id: 20, priority: 'Low', task: 'ST data sheet of 4K-4001, 4P-3502, 2K-301 and series of 2P-101/1102/1105 and 3P-101/106/110', category: 'PCD4', dueDate: '2026-11-20', dueTime: '08:00', status: 'To Do', est: '', urgent: 'No', important: 'No', notes: 'Request information' }
+];
+
+let tasks = JSON.parse(localStorage.getItem('tasks_2026_v1')) || JSON.parse(JSON.stringify(INITIAL_TASKS));
+let currentYear = 2026;
+let currentMonth = 10; // 0-indexed -> 10 = November
+let selectedDate = '2026-11-13';
+let draggedTaskId = null;
+
+function saveTasks() {
+  localStorage.setItem('tasks_2026_v1', JSON.stringify(tasks));
+}
+
+function resetDefaultData() {
+  tasks = JSON.parse(JSON.stringify(INITIAL_TASKS));
+  saveTasks();
+  renderAll();
+}
+
+function switchTab(viewName, btnEl) {
+  document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-' + viewName).classList.add('active');
+  btnEl.classList.add('active');
+}
+
+function updateKPIs() {
+  const total = tasks.length;
+  const todo = tasks.filter(t => t.status === 'To Do').length;
+  const doing = tasks.filter(t => t.status === 'Doing').length;
+  const done = tasks.filter(t => t.status === 'Done').length;
+  const highOpen = tasks.filter(t => t.priority === 'High' && t.status !== 'Done').length;
+  const rate = total > 0 ? Math.round((done / total) * 100) : 0;
+
+  document.getElementById('kpiTotal').textContent = total;
+  document.getElementById('kpiTodo').textContent = todo;
+  document.getElementById('kpiDoing').textContent = doing;
+  document.getElementById('kpiHighOpen').textContent = highOpen;
+  document.getElementById('kpiDone').textContent = done;
+  document.getElementById('kpiRate').textContent = rate + '% Completion Rate';
+}
+
+/* Calendar Functions */
+function changeMonth(delta) {
+  currentMonth += delta;
+  if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+  if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+  renderCalendar();
+}
+
+function goToday() {
+  currentYear = 2026;
+  currentMonth = 10;
+  selectedDate = '2026-11-10';
+  document.getElementById('dashboardDateInput').value = selectedDate;
+  renderAll();
+}
+
+function formatYMD(y, m, d) {
+  return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+}
+
+function renderCalendar() {
+  const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  document.getElementById('calTitle').textContent = `${monthNames[currentMonth]} ${currentYear}`;
+
+  const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const prevDays = new Date(currentYear, currentMonth, 0).getDate();
+
+  const grid = document.getElementById('calGridBody');
+  grid.innerHTML = '';
+
+  const totalCells = 35; // 5 weeks fits November 2026 cleanly on screen without vertical bloat
+  const neededCells = (firstDay + daysInMonth > 35) ? 42 : 35;
+
+  for (let i = 0; i < neededCells; i++) {
+    let y = currentYear, m = currentMonth, d = 1;
+    let isOther = false;
+    if (i < firstDay) {
+      d = prevDays - firstDay + i + 1;
+      m = currentMonth - 1;
+      if (m < 0) { m = 11; y--; }
+      isOther = true;
+    } else if (i >= firstDay + daysInMonth) {
+      d = i - (firstDay + daysInMonth) + 1;
+      m = currentMonth + 1;
+      if (m > 11) { m = 0; y++; }
+      isOther = true;
+    } else {
+      d = i - firstDay + 1;
+    }
+
+    const dateStr = formatYMD(y, m, d);
+    const dayTasks = tasks.filter(t => t.dueDate === dateStr);
+
+    const cell = document.createElement('div');
+    cell.className = 'cal-day' + (isOther ? ' other-month' : '') + (dateStr === selectedDate ? ' selected' : '');
+    cell.onclick = () => {
+      selectedDate = dateStr;
+      renderCalendar();
+      renderInspector();
+    };
+
+    // Drag & drop onto calendar date
+    cell.ondragover = (e) => { e.preventDefault(); cell.classList.add('drag-over'); };
+    cell.ondragleave = () => cell.classList.remove('drag-over');
+    cell.ondrop = (e) => {
+      e.preventDefault();
+      cell.classList.remove('drag-over');
+      if (draggedTaskId !== null) {
+        const t = tasks.find(x => x.id === draggedTaskId);
+        if (t) {
+          t.dueDate = dateStr;
+          selectedDate = dateStr;
+          saveTasks();
+          renderAll();
+        }
+      }
+    };
+
+    const topRow = document.createElement('div');
+    topRow.className = 'cal-day-num';
+    topRow.innerHTML = `<span>${d}</span>` + (dateStr === '2026-11-10' ? `<span class="today-tag">Today</span>` : '');
+    cell.appendChild(topRow);
+
+    dayTasks.forEach(t => {
+      const pill = document.createElement('div');
+      pill.className = 'cal-pill ' + (t.status === 'Done' ? 'Done' : t.priority);
+      pill.draggable = true;
+      pill.ondragstart = (e) => {
+        e.stopPropagation();
+        draggedTaskId = t.id;
+      };
+      pill.textContent = `${t.dueTime || ''} #${t.id} ${t.task}`;
+      pill.title = `${t.dueTime || ''} #${t.id} ${t.task} (${t.status})`;
+      cell.appendChild(pill);
+    });
+
+    grid.appendChild(cell);
+  }
+}
+
+function renderInspector() {
+  document.getElementById('inspDateTitle').textContent = `📌 งานวันที่ ${selectedDate}`;
+  const list = document.getElementById('inspectorList');
+  list.innerHTML = '';
+
+  const dayTasks = tasks.filter(t => t.dueDate === selectedDate);
+  if (dayTasks.length === 0) {
+    list.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text-muted);font-size:0.86rem;">ไม่มีงานครบกำหนดในวันที่ ${selectedDate}<br><br><button class="btn btn-primary" onclick="openModalForDate('${selectedDate}')">+ เพิ่มงานในวันนี้</button></div>`;
+    return;
+  }
+
+  dayTasks.forEach(t => {
+    const item = document.createElement('div');
+    item.className = 'insp-item';
+    item.innerHTML = `
+      <div class="insp-item-top">
+        <span class="badge ${t.priority}">#${t.id} • ${t.priority}</span>
+        <span class="badge ${t.status.replace(' ', '-')}">${t.status}</span>
+      </div>
+      <div style="font-weight:700;font-size:0.88rem;margin-bottom:5px;word-break:break-word;">${t.task}</div>
+      <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:8px;">หมวดหมู่: <strong>${t.category}</strong> | หมายเหตุ: ${t.notes || '-'}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+        <input type="date" class="inline-input" value="${t.dueDate}" onchange="updateTaskField(${t.id}, 'dueDate', this.value)">
+        <input type="time" class="inline-input" value="${t.dueTime}" step="1800" onchange="updateTaskField(${t.id}, 'dueTime', this.value)">
+        <select class="inline-input" onchange="updateTaskField(${t.id}, 'status', this.value)">
+          <option value="To Do" ${t.status==='To Do'?'selected':''}>To Do</option>
+          <option value="Doing" ${t.status==='Doing'?'selected':''}>Doing</option>
+          <option value="Blocked" ${t.status==='Blocked'?'selected':''}>Blocked</option>
+          <option value="Done" ${t.status==='Done'?'selected':''}>Done</option>
+        </select>
+      </div>
+    `;
+    list.appendChild(item);
+  });
+}
+
+/* Kanban Board Functions */
+function renderKanban() {
+  const statuses = ['To Do', 'Doing', 'Blocked', 'Done'];
+  const board = document.getElementById('kanbanBoard');
+  board.innerHTML = '';
+
+  statuses.forEach(st => {
+    const colTasks = tasks.filter(t => t.status === st);
+    const col = document.createElement('div');
+    col.className = 'kanban-col';
+    col.ondragover = (e) => { e.preventDefault(); col.classList.add('drag-over'); };
+    col.ondragleave = () => col.classList.remove('drag-over');
+    col.ondrop = (e) => {
+      e.preventDefault();
+      col.classList.remove('drag-over');
+      if (draggedTaskId !== null) {
+        updateTaskField(draggedTaskId, 'status', st);
+      }
+    };
+
+    col.innerHTML = `
+      <div class="kanban-col-hdr">
+        <span>${st}</span>
+        <span class="badge ${st.replace(' ', '-')}">${colTasks.length}</span>
+      </div>
+    `;
+
+    colTasks.forEach(t => {
+      const card = document.createElement('div');
+      card.className = 'kanban-card';
+      card.draggable = true;
+      card.ondragstart = () => { draggedTaskId = t.id; };
+      card.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span class="badge ${t.priority}">${t.priority}</span>
+          <span style="font-size:0.74rem;font-weight:700;color:var(--text-muted);">#${t.id} • ${t.category}</span>
+        </div>
+        <div class="kanban-card-title">${t.task}</div>
+        <div style="font-size:0.76rem;color:var(--text-muted);">${t.notes || ''}</div>
+        <div class="kanban-card-footer">
+          <input type="date" class="inline-input" value="${t.dueDate}" onchange="updateTaskField(${t.id}, 'dueDate', this.value)">
+          <input type="time" class="inline-input" value="${t.dueTime}" step="1800" onchange="updateTaskField(${t.id}, 'dueTime', this.value)">
+        </div>
+      `;
+      col.appendChild(card);
+    });
+
+    board.appendChild(col);
+  });
+}
+
+/* Smart Table View */
+function renderTable() {
+  const q = (document.getElementById('searchBox').value || '').toLowerCase();
+  const fSt = document.getElementById('filterStatus').value;
+  const fPr = document.getElementById('filterPriority').value;
+  const fCat = document.getElementById('filterCategory').value;
+
+  const tbody = document.getElementById('taskTableBody');
+  tbody.innerHTML = '';
+
+  tasks.filter(t => {
+    if (fSt !== 'ALL' && t.status !== fSt) return false;
+    if (fPr !== 'ALL' && t.priority !== fPr) return false;
+    if (fCat !== 'ALL' && t.category !== fCat) return false;
+    if (q && !(t.task.toLowerCase().includes(q) || t.category.toLowerCase().includes(q) || (t.notes||'').toLowerCase().includes(q))) return false;
+    return true;
+  }).forEach(t => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${t.id}</strong></td>
+      <td>
+        <select onchange="updateTaskField(${t.id}, 'priority', this.value)">
+          <option value="High" ${t.priority==='High'?'selected':''}>High</option>
+          <option value="Medium" ${t.priority==='Medium'?'selected':''}>Medium</option>
+          <option value="Low" ${t.priority==='Low'?'selected':''}>Low</option>
+        </select>
+      </td>
+      <td><input type="text" value="${t.task.replace(/"/g, '&quot;')}" style="width:100%;min-width:220px;" onchange="updateTaskField(${t.id}, 'task', this.value)"></td>
+      <td><span class="badge Low">${t.category}</span></td>
+      <td><input type="date" value="${t.dueDate}" onchange="updateTaskField(${t.id}, 'dueDate', this.value)"></td>
+      <td><input type="time" value="${t.dueTime}" step="1800" onchange="updateTaskField(${t.id}, 'dueTime', this.value)"></td>
+      <td>
+        <select onchange="updateTaskField(${t.id}, 'status', this.value)">
+          <option value="To Do" ${t.status==='To Do'?'selected':''}>To Do</option>
+          <option value="Doing" ${t.status==='Doing'?'selected':''}>Doing</option>
+          <option value="Blocked" ${t.status==='Blocked'?'selected':''}>Blocked</option>
+          <option value="Done" ${t.status==='Done'?'selected':''}>Done</option>
+        </select>
+      </td>
+      <td><input type="number" value="${t.est}" style="width:68px;" onchange="updateTaskField(${t.id}, 'est', this.value)"></td>
+      <td>${t.urgent}</td>
+      <td>${t.important}</td>
+      <td><input type="text" value="${(t.notes||'').replace(/"/g, '&quot;')}" style="width:100%;min-width:160px;" onchange="updateTaskField(${t.id}, 'notes', this.value)"></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function updateTaskField(id, field, value) {
+  const t = tasks.find(x => x.id === id);
+  if (t) {
+    t[field] = value;
+    saveTasks();
+    renderAll();
+  }
+}
+
+function openModal() {
+  document.getElementById('newTaskDate').value = selectedDate;
+  document.getElementById('taskModal').classList.add('open');
+}
+function openModalForDate(dt) {
+  selectedDate = dt;
+  openModal();
+}
+function closeModal() {
+  document.getElementById('taskModal').classList.remove('open');
+}
+function saveNewTask() {
+  const desc = document.getElementById('newTaskDesc').value.trim();
+  if (!desc) return alert('กรุณาระบุชื่องาน');
+  const nextId = tasks.length > 0 ? Math.max(...tasks.map(t => t.id)) + 1 : 1;
+  tasks.push({
+    id: nextId,
+    priority: document.getElementById('newTaskPri').value,
+    task: desc,
+    category: document.getElementById('newTaskCat').value,
+    dueDate: document.getElementById('newTaskDate').value,
+    dueTime: document.getElementById('newTaskTime').value,
+    status: document.getElementById('newTaskStatus').value,
+    est: document.getElementById('newTaskEst').value || '',
+    urgent: 'No',
+    important: 'Yes',
+    notes: document.getElementById('newTaskNotes').value.trim()
+  });
+  document.getElementById('newTaskDesc').value = '';
+  document.getElementById('newTaskNotes').value = '';
+  closeModal();
+  saveTasks();
+  renderAll();
+}
+
+function exportCSV() {
+  const headers = ['ID','Priority','Task','Category','Due Date','Due Time','Status','Est (min)','Urgent','Important','Notes'];
+  const rows = tasks.map(t => [
+    t.id, t.priority, `"${(t.task||'').replace(/"/g,'""')}"`, t.category, t.dueDate, t.dueTime, t.status, t.est, t.urgent, t.important, `"${(t.notes||'').replace(/"/g,'""')}"`
+  ]);
+  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'Daily_Task_Dashboard_2026_Export.csv';
+  a.click();
+}
+
+document.getElementById('dashboardDateInput').addEventListener('change', function() {
+  if (this.value) {
+    selectedDate = this.value;
+    const parts = this.value.split('-');
+    currentYear = parseInt(parts[0], 10);
+    currentMonth = parseInt(parts[1], 10) - 1;
+    renderAll();
+  }
+});
+
+function renderAll() {
+  updateKPIs();
+  renderCalendar();
+  renderInspector();
+  renderKanban();
+  renderTable();
+}
+
+renderAll();
+</script>
+</body>
+</html>
