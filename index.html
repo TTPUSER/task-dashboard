@@ -628,7 +628,7 @@
           <h2 id="calTitle">November 2026</h2>
           <div class="cal-nav">
             <button onclick="changeMonth(-1)">◀ เดือนก่อนหน้า</button>
-            <button onclick="goToday()">วันนี้ (10 Nov 2026)</button>
+            <button id="todayBtn" onclick="goToday()">วันนี้</button>
             <button onclick="changeMonth(1)">เดือนถัดไป ▶</button>
           </div>
         </div>
@@ -801,9 +801,14 @@ const INITIAL_TASKS = [
 ];
 
 let tasks = JSON.parse(localStorage.getItem('tasks_2026_v1')) || JSON.parse(JSON.stringify(INITIAL_TASKS));
-let currentYear = 2026;
-let currentMonth = 10; // 0-indexed -> 10 = November
-let selectedDate = '2026-11-13';
+function getTodayYMD() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+const _now = new Date();
+let currentYear = _now.getFullYear();
+let currentMonth = _now.getMonth();
+let selectedDate = getTodayYMD();
 let draggedTaskId = null;
 
 function saveTasks() {
@@ -848,11 +853,13 @@ function changeMonth(delta) {
 }
 
 function goToday() {
-  currentYear = 2026;
-  currentMonth = 10;
-  selectedDate = '2026-11-10';
+  const d = new Date();
+  currentYear = d.getFullYear();
+  currentMonth = d.getMonth();
+  selectedDate = getTodayYMD();
   document.getElementById('dashboardDateInput').value = selectedDate;
   renderAll();
+}
 }
 
 function formatYMD(y, m, d) {
@@ -920,7 +927,7 @@ function renderCalendar() {
 
     const topRow = document.createElement('div');
     topRow.className = 'cal-day-num';
-    topRow.innerHTML = `<span>${d}</span>` + (dateStr === '2026-11-10' ? `<span class="today-tag">Today</span>` : '');
+    topRow.innerHTML = `<span>${d}</span>` + (dateStr === getTodayYMD() ? `<span class="today-tag">Today</span>` : '');
     cell.appendChild(topRow);
 
     dayTasks.forEach(t => {
